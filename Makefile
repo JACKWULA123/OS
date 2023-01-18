@@ -42,4 +42,4 @@ kernel.iso: kernel.bin
 
 clean :
 	rm -rf iso
-	rm kernel.bin kernel.o loader.o
+	rm kernel.bin kernel.o loader.o kernel.iso
