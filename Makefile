@@ -40,6 +40,12 @@ kernel.iso: kernel.bin
 	grub-mkrescue --output=$@ iso
 	rm -rf iso
 
+run : kernel.iso
+	(killall vmware && sleep 1) || true
+	vmware -x /home/jackwula/vmware/OS/OS.vmx
+#	run your os in vmware virtualmachine.
+#	.vmx needs to be created in advance manually.
+
 clean :
 	rm -rf iso
 	rm kernel.bin kernel.o loader.o kernel.iso
