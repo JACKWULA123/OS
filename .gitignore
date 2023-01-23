@@ -1,0 +1,6 @@
+# this is a .gitignore file.
+# the following files are ignored.
+kernel.bin
+kernel.iso
+kernel.o
+*.o
