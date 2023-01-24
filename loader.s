@@ -9,7 +9,7 @@
     .long CHECKSUM
 
 .section .text
-.extern kernel
+.extern kernelMain
 .extern callConstructors
 .global loader
 
@@ -20,7 +20,7 @@ loader:
 
     push %eax
     push %ebx
-    call kernel
+    call kernelMain
 
 _stop:
     cli
