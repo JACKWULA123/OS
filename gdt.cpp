@@ -2,12 +2,12 @@
 
 #include "gdt.h"
 
-RamSegmentDescriptor::RamSegmentDescriptor(uint32_t base, uint32_t limit, uint8_t flags)
+RamSegmentDescriptor::RamSegmentDescriptor(uint32_t _base, uint32_t _limit, uint8_t _flags)
 {
     uint8_t *target = (uint8_t *)this;
     // if limit is less than 1048576 which is 2^20, 1MB, the units of limit
     // will be byte, otherwise it will be page(4KB).
-    if (limit < 1048576)
+    if (_limit < 1048576)
     {
         target[6] = 0x40;
         // set flags as the unit is byte.
@@ -18,31 +18,31 @@ RamSegmentDescriptor::RamSegmentDescriptor(uint32_t base, uint32_t limit, uint8_
         target[6] = 0xc0;
         // if last four bytes of limit are less than 0xfff(2^12-1), page--;
         // unsolved?????????
-        if ((limit & 0xfff) != 0xfff)
+        if ((_limit & 0xfff) != 0xfff)
         {
-            limit = (limit >> 12) - 1;
+            _limit = (_limit >> 12) - 1;
         }
         else
         {
-            limit = limit >> 12;
+            _limit = _limit >> 12;
         }
     }
     // set the rest of the RamDescriptor.
-    target[0] = limit & 0xff;
+    target[0] = _limit & 0xff;
 
-    target[1] = (limit >> 8) & 0xff;
+    target[1] = (_limit >> 8) & 0xff;
 
-    target[6] = (limit >> 16) & 0xf | 0xc0;
+    target[6] = (_limit >> 16) & 0xf | 0xc0;
 
-    target[2] = base & 0xff;
+    target[2] = _base & 0xff;
 
-    target[3] = (base >> 8) & 0xff;
+    target[3] = (_base >> 8) & 0xff;
 
-    target[4] = (base >> 16) & 0xff;
+    target[4] = (_base >> 16) & 0xff;
 
-    target[7] = (base >> 24) & 0xff;
+    target[7] = (_base >> 24) & 0xff;
 
-    target[5] = flags;
+    target[5] = _flags;
 }
 
 uint32_t RamSegmentDescriptor::baseAddress()
