@@ -5,20 +5,16 @@
 RamSegmentDescriptor::RamSegmentDescriptor(uint32_t _base, uint32_t _limit, uint8_t _flags)
 {
     uint8_t *target = (uint8_t *)this;
-    // if limit is less than 1048576 which is 2^20, 1MB, the units of limit
-    // will be byte, otherwise it will be page(4KB).
-    if (_limit < 1048576)
+
+    if (_limit < MIN_RAM_PAGING_LIMIT)
     {
-        target[6] = 0x40;
-        // set flags as the unit is byte.
+        target[6] = RAM_PAGING_DISABLED;
     }
     else
     {
-        // set the flags as the unit is page(4KB).
-        target[6] = 0xc0;
-        // if last four bytes of limit are less than 0xfff(2^12-1), page--;
-        // unsolved?????????
-        if ((_limit & 0xfff) != 0xfff)
+        target[6] = RAM_PAGING_ENABLED;
+
+        if (doNeedLastPage(_limit))
         {
             _limit = (_limit >> 12) - 1;
         }
@@ -32,7 +28,7 @@ RamSegmentDescriptor::RamSegmentDescriptor(uint32_t _base, uint32_t _limit, uint
 
     target[1] = (_limit >> 8) & 0xff;
 
-    target[6] = (_limit >> 16) & 0xf | 0xc0;
+    target[6] |= (_limit >> 16) & 0xf;
 
     target[2] = _base & 0xff;
 
@@ -43,6 +39,30 @@ RamSegmentDescriptor::RamSegmentDescriptor(uint32_t _base, uint32_t _limit, uint
     target[7] = (_base >> 24) & 0xff;
 
     target[5] = _flags;
+}
+
+bool RamSegmentDescriptor::doNeedLastPage(uint32_t _limit)
+{
+    if ((_limit & 0xfff) != 0xfff)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool RamSegmentDescriptor::doNeedLastPage(uint8_t _limit)
+{
+    if ((_limit & RAM_PAGING_ENABLED) != RAM_PAGING_ENABLED)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 uint32_t RamSegmentDescriptor::baseAddress()
@@ -61,7 +81,7 @@ uint32_t RamSegmentDescriptor::limitLen()
     uint32_t result = target[6] & 0xf;
     result = (result << 8) + target[1];
     result = (result << 8) + target[0];
-    if ((target[6] & 0xc0) != 0xc0)
+    if (doNeedLastPage(target[6]))
     {
         result = (result << 12) | 0xfff;
     }
@@ -75,8 +95,8 @@ uint32_t RamSegmentDescriptor::limitLen()
 GlobalDescriptorTable::GlobalDescriptorTable()
     : null_RamSegmentDescriptor(0, 0, 0),
       unused_RamSegmentDescriptor(0, 0, 0),
-      code_RamSegmentDescriptor(0, 64 * 1024 * 1024, 0x9a), // 0x9a(10011010)：kernelonly, excutable, readonly.
-      data_RamSegmentDescriptor(0, 64 * 1024 * 1024, 0x92)  // 0x92(10010010)：kernelonly, unexcutable, read-write.
+      code_RamSegmentDescriptor(0, 64 MB__, KERNELONLY_EXCUTABLE_READONLY),
+      data_RamSegmentDescriptor(0, 64 MB__, KERNELONLY_UNEXCUTABLE_READWRITE)
 {
     uint32_t i[2];
     i[0] = (uint32_t)this;
