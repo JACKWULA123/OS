@@ -1,6 +1,7 @@
 // kernel.cpp
 #include "type.h"
 #include "gdt.h"
+#include "screen.h"
 
 typedef void (*constructor)();
 
@@ -16,23 +17,17 @@ extern "C" void callConstructors()
     }
 }
 
-void printOnScreen(char *str)
-{
-    static uint16_t *video_memory = (uint16_t *)0xb8000;
-
-    for (int i = 0; str[i] != '\0'; i++)
-    {
-        video_memory[i] = (video_memory[i] & 0xFF00) | str[i];
-    }
-
-    return;
-}
-
 extern "C" int kernelMain(void *multiboot_struct, uint32_t magic_umber)
 {
     GlobalDescriptorTable gdt;
 
-    printOnScreen("gdt created successfully.");
+    VGA_Screen screen;
+
+    screen.printf("---------|\n---------|");
+
+    screen.clearScreen(1);
+
+    screen.printf("nice!");
 
     return 0;
 }
